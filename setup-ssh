@@ -68,13 +68,13 @@ echo "尝试从 GitHub 获取 SSH 公钥..."
 if ! curl -s "https://api.github.com/users/lingyicute/keys" \
   | jq -r 'try (.[].key) catch empty' > authorized_keys.tmp; then
     echo "网络请求失败，使用备用密钥" >&2
-    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPmjockd246L5pyCAQ8RJq10kaLq3XR6c58/tAxXlUP+" > authorized_keys
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYypSUQN8M75L/xn0zuUSYhps/DfKWet4QtDl16fRMF" > authorized_keys
 elif [ -s authorized_keys.tmp ]; then
     mv authorized_keys.tmp authorized_keys
     echo "成功从 GitHub 获取 SSH 密钥"
 else
     echo "GitHub 返回空密钥列表，使用备用密钥" >&2
-    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPmjockd246L5pyCAQ8RJq10kaLq3XR6c58/tAxXlUP+" > authorized_keys
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYypSUQN8M75L/xn0zuUSYhps/DfKWet4QtDl16fRMF" > authorized_keys
 fi
 
 # `-q` is to make it quiet, `-N ''` is for empty passphrase
