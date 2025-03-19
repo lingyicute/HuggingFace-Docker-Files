@@ -1,6 +1,6 @@
 Port 2222
-HostKey $PWD/ssh_host_rsa_key
-PidFile $PWD/sshd.pid
+HostKey /home/lingyicute/app/ssh_host_rsa_key
+PidFile /home/lingyicute/app/sshd.pid
 
 # PAM is necessary for password authentication on Debian-based systems
 UsePAM yes
@@ -18,6 +18,6 @@ PasswordAuthentication no
 AllowUsers lingyicute
 
 # Only allow those keys
-AuthorizedKeysFile $PWD/authorized_keys
+AuthorizedKeysFile /home/lingyicute/app/authorized_keys
 
 # vim: ft=sshdconfig
