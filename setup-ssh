@@ -41,7 +41,7 @@ generate_connection_info() {
         echo "$connection_info"
 }
 
-# Check non-coreutils dependencies
+echo "Check non-coreutils dependencies..."
 EXTERNAL_DEPS="curl jq ssh-keygen"
 
 for dep in $EXTERNAL_DEPS; do
@@ -70,7 +70,7 @@ if ! grep -q "$bashrc_path" ~/.bash_profile; then
 fi
 
 cloudflared_url=https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-echo "Downloading \`cloudflared\` from <$cloudflared_url>..."
+echo "Downloading \`cloudflared\`"
 curl --location --silent --output cloudflared "$cloudflared_url"
 chmod +x cloudflared
 
