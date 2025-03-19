@@ -10,7 +10,7 @@ start_cloudflared() {
     # 清空或创建日志文件
     true > "$cloudflared_log"
     
-    ./cloudflared --no-autoupdate tunnel run --token $CFTK | sed -u 's/^/cloudflared-log-output: /' &
+    ./cloudflared --no-autoupdate tunnel run --token "$CFTK" | sed -u 's/^/cloudflared-log-output: /' &
     cloudflared_pid=$!
     
     generate_connection_info
