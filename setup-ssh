@@ -1,0 +1,143 @@
+#!/bin/bash -e
+#
+# GNU Bash required for process substitution `<()` later.
+#
+#
+
+start_cloudflared() {
+    cloudflared_log="cloudflared-$(date +%s).log"
+    
+    # 清空或创建日志文件
+    true > "$cloudflared_log"
+    
+    echo '启动新的Cloudflare隧道...'
+    ./cloudflared tunnel --no-autoupdate --url tcp://localhost:2222 2>&1 | tee -a "$cloudflared_log" | sed -u 's/^/cloudflared-log-output: /' &
+    cloudflared_pid=$!
+    sleep 2
+    echo -n "等待隧道URL生成..."
+    
+    # 使用带超时的精确等待
+    if ! timeout 30s bash -c \
+        'until grep -q -m1 "trycloudflare.com" "$0"; do sleep 1; done' \
+        "$cloudflared_log"
+    then
+        echo >&2 "超时：未检测到隧道URL"
+        return 1
+    fi
+    
+    url=$(grep -o 'https://.*\.trycloudflare.com' "$cloudflared_log" | tail -n1)
+    echo " 获得新URL: $url"
+    
+    generate_connection_info
+}
+
+generate_connection_info() {
+    connection_info=$(
+        echo "新的连接命令已生成:"
+        echo "ssh-keygen -R lyi-hf-ssh && echo 'lyi-hf-ssh $public_key' >> ~/.ssh/known_hosts && ssh -o ProxyCommand='cloudflared access tcp --hostname $url' runner@lyi-hf-ssh"
+        echo "或快速连接（不验证主机密钥）:"
+        echo "ssh -o ProxyCommand='cloudflared access tcp --hostname $url' -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=accept-new runner@lyi-hf-ssh"
+    )
+        echo "$connection_info"
+}
+
+# Check non-coreutils dependencies
+EXTERNAL_DEPS="curl jq ssh-keygen"
+
+for dep in $EXTERNAL_DEPS; do
+    if ! command -v "$dep" > /dev/null 2>&1; then
+       echo "Command $dep not installed on the system!" >&2
+       exit 1
+    fi
+done
+
+bashrc_path=$(pwd)/bashrc
+
+#
+# Source our `bashrc` to auto start tmux upon SSH login.
+#
+# Added to `~/.bash_profile` because at least on GitHub default runner, there's
+# both a `~/.bash_profile` that sets up `nvm`, and a `~/.profile` that sources
+# `~/.bashrc` if interactive, but Bash will only source `~/.bash_profile` if it
+# exists, so in a GitHub runner, `~/.bashrc` will never be sourced when using a
+# login shell like over SSH (but it will if starting a sub non-login shell by
+# typing `bash`).
+#
+# So we hook into `~/.bash_profile` instead.
+#
+if ! grep -q "$bashrc_path" ~/.bash_profile; then
+    echo "source \"$bashrc_path\"" >> ~/.bash_profile
+fi
+
+cloudflared_url=https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+echo "Downloading \`cloudflared\` from <$cloudflared_url>..."
+curl --location --silent --output cloudflared "$cloudflared_url"
+chmod +x cloudflared
+
+curl -s "https://api.github.com/users/lingyicute" | jq -r '.[].key' > authorized_keys
+
+if grep -q . authorized_keys; then
+    echo "Configured SSH key(s) for user: lingyicute"
+else
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+fi
+
+# `-q` is to make it quiet, `-N ''` is for empty passphrase
+echo 'Creating SSH server key...'
+ssh-keygen -q -f ssh_host_rsa_key -N ''
+echo "$fingerprint"
+
+echo 'Creating SSH server config...'
+sed "s,\$PWD,$PWD,;s,\$USER,$USER," sshd_config.template > sshd_config
+
+echo 'Starting SSH server...'
+sshd -f sshd_config -D &
+sshd_pid=$!
+
+echo '准备会话...'
+(tmux new-session -d -s lyi-hf-ssh)
+
+./static-web-server -p 7860 --root . >/dev/null 2>&1 &
+
+while : ; do
+    start_cloudflared
+    
+    # 等待cloudflared进程退出
+    wait $cloudflared_pid
+    cloudflared_exit=$?
+    
+    # 检查tmux会话是否仍在运行
+    if ! tmux has-session -t lyi-hf-ssh 2>/dev/null; then
+        echo >&2 "tmux 异常退出，4秒后重启..."
+        tmux new-session -d -s lyi-hf-ssh
+		sleep 4
+    fi
+    
+    # 如果会话仍在运行
+    if [ $cloudflared_exit -ne 0 ]; then
+        echo >&2 "cloudflared 异常退出 (code $cloudflared_exit)，4秒后重启..."
+        sleep 4
+    else
+        echo "cloudflared 以状态0退出，4秒后重启..."
+        sleep 4
+    fi
+done
