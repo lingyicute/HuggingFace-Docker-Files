@@ -64,18 +64,8 @@ echo "正在下载 \`cloudflared\`"
 curl --location --silent --output cloudflared "$cloudflared_url"
 chmod +x cloudflared
 
-echo "尝试从 GitHub 获取 SSH 公钥..."
-if ! curl -s "https://api.github.com/users/lingyicute/keys" \
-  | jq -r 'try (.[].key) catch empty' > authorized_keys.tmp; then
-    echo "网络请求失败，使用备用密钥" >&2
-    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYypSUQN8M75L/xn0zuUSYhps/DfKWet4QtDl16fRMF" > authorized_keys
-elif [ -s authorized_keys.tmp ]; then
-    mv authorized_keys.tmp authorized_keys
-    echo "成功从 GitHub 获取 SSH 密钥"
-else
-    echo "GitHub 返回空密钥列表，使用备用密钥" >&2
-    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYypSUQN8M75L/xn0zuUSYhps/DfKWet4QtDl16fRMF" > authorized_keys
-fi
+echo "使用备用密钥"
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYypSUQN8M75L/xn0zuUSYhps/DfKWet4QtDl16fRMF" > authorized_keys
 
 # `-q` is to make it quiet, `-N ''` is for empty passphrase
 echo '创建 SSH 服务器密钥...'
@@ -84,6 +74,8 @@ echo "$fingerprint"
 
 echo '创建 SSH 服务器配置...'
 sed "s,\$PWD,$PWD,;s,\$USER,$USER," sshd_config.template > sshd_config
+
+chmod 600 authorized_keys
 
 echo '启动 SSH 服务器...'
 sshd -f sshd_config -D &
