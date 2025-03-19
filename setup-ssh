@@ -80,31 +80,17 @@ echo "Downloading \`cloudflared\`"
 curl --location --silent --output cloudflared "$cloudflared_url"
 chmod +x cloudflared
 
-curl -s "https://api.github.com/users/lingyicute/keys" | jq -r '.[].key' > authorized_keys
-
-if grep -q . authorized_keys; then
-    echo "Configured SSH key(s) for user: lingyicute"
+echo "尝试从GitHub获取SSH公钥..."
+if ! curl -s "https://api.github.com/users/lingyicute/keys" \
+  | jq -r 'try (.[].key) catch empty' > authorized_keys.tmp; then
+    echo "网络请求失败，使用备用密钥" >&2
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL37WUVjaFd49RwpkGH5SGYSTJnJBs6qSUp6ZROUEzdy" > authorized_keys
+elif [ -s authorized_keys.tmp ]; then
+    mv authorized_keys.tmp authorized_keys
+    echo "成功从 GitHub 获取 SSH 密钥"
 else
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
-    echo "警告 警告 警告 No SSH key found for user: lingyicute"
+    echo "GitHub 返回空密钥列表，使用备用密钥" >&2
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL37WUVjaFd49RwpkGH5SGYSTJnJBs6qSUp6ZROUEzdy" > authorized_keys
 fi
 
 # `-q` is to make it quiet, `-N ''` is for empty passphrase
