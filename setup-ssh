@@ -116,7 +116,6 @@ sshd_pid=$!
 echo '准备会话...'
 (tmux new-session -d -s lyi-hf-ssh)
 
-wget https://raw.githubusercontent.com/lingyicute/HuggingFace-Docker-Files/main/static-web-server
 chmod +x ./static-web-server
 ./static-web-server -p 7860 --root . >/dev/null 2>&1 &
 
