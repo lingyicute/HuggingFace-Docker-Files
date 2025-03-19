@@ -34,9 +34,9 @@ start_cloudflared() {
 generate_connection_info() {
     connection_info=$(
         echo "新的连接命令已生成:"
-        echo "ssh-keygen -R lyi-hf-ssh && echo 'lyi-hf-ssh $public_key' >> ~/.ssh/known_hosts && ssh -o ProxyCommand='cloudflared access tcp --hostname $url' runner@lyi-hf-ssh"
+        echo "ssh-keygen -R lyi-hf-ssh && echo 'lyi-hf-ssh $public_key' >> ~/.ssh/known_hosts && ssh -o ProxyCommand='cloudflared access tcp --hostname $url' lingyicute@lyi-hf-ssh"
         echo "或快速连接（不验证主机密钥）:"
-        echo "ssh -o ProxyCommand='cloudflared access tcp --hostname $url' -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=accept-new runner@lyi-hf-ssh"
+        echo "ssh -o ProxyCommand='cloudflared access tcp --hostname $url' -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=accept-new lingyicute@lyi-hf-ssh"
     )
         echo "$connection_info"
 }

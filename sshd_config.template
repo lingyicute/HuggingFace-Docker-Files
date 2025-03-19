@@ -15,7 +15,7 @@ UsePAM yes
 PasswordAuthentication no
 
 # Only allow single user
-AllowUsers $USER
+AllowUsers lingyicute
 
 # Only allow those keys
 AuthorizedKeysFile $PWD/authorized_keys
