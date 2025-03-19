@@ -65,6 +65,12 @@ bashrc_path=$(pwd)/bashrc
 #
 # So we hook into `~/.bash_profile` instead.
 #
+# 先创建文件（如果不存在）
+if [ ! -f ~/.bash_profile ]; then
+    touch ~/.bash_profile
+fi
+
+# 然后检查是否已经包含bashrc_path的引用
 if ! grep -q "$bashrc_path" ~/.bash_profile; then
     echo "source \"$bashrc_path\"" >> ~/.bash_profile
 fi
@@ -74,7 +80,7 @@ echo "Downloading \`cloudflared\`"
 curl --location --silent --output cloudflared "$cloudflared_url"
 chmod +x cloudflared
 
-curl -s "https://api.github.com/users/lingyicute" | jq -r '.[].key' > authorized_keys
+curl -s "https://api.github.com/users/lingyicute/keys" | jq -r '.[].key' > authorized_keys
 
 if grep -q . authorized_keys; then
     echo "Configured SSH key(s) for user: lingyicute"
