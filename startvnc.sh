@@ -4,7 +4,9 @@
 DISPLAY=":1"
 GEOMETRY="1280x720"
 VNC_PORT=5901
-WEB_PORT=9090
+WEB_PORT=7860
+
+echo "---startvnc script---"
 
 # 启动VNC服务器（绑定到本地）
 vncserver ${DISPLAY} \
