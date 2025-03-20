@@ -4,14 +4,12 @@
 #
 #
 
-start_cloudflared() {
-    cloudflared_log="cloudflared-$(date +%s).log"
+start_ngrok() {
     
-    # 清空或创建日志文件
-    true > "$cloudflared_log"
-    
-    ./cloudflared --no-autoupdate tunnel run --token "$CFTK" | sed -u 's/^/cloudflared-log-output: /' &
-    cloudflared_pid=$!
+    ngrok config add-authtoken "$NTK"
+    ngrok tcp 2222 2>&1 | sed -u 's/^/ngrok-log-output: /' &
+
+    ngrok_pid=$!
     
     generate_connection_info
 }
@@ -59,11 +57,6 @@ if ! grep -q "$bashrc_path" ~/.bash_profile; then
     echo "source \"$bashrc_path\"" >> ~/.bash_profile
 fi
 
-cloudflared_url=https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-echo "正在下载 \`cloudflared\`"
-curl --location --silent --output cloudflared "$cloudflared_url"
-chmod +x cloudflared
-
 echo "使用备用密钥"
 echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYypSUQN8M75L/xn0zuUSYhps/DfKWet4QtDl16fRMF" > authorized_keys
 
@@ -88,11 +81,11 @@ chmod +x ./static-web-server
 ./static-web-server -p 7860 --root . >/dev/null 2>&1 &
 
 while : ; do
-    start_cloudflared
+    start_ngrok
     
     # 等待cloudflared进程退出
-    wait $cloudflared_pid
-    cloudflared_exit=$?
+    wait $ngrok_pid
+    ngrok_exit=$?
     
     # 检查tmux会话是否仍在运行
     if ! tmux has-session -t lyi-hf-ssh 2>/dev/null; then
@@ -102,8 +95,8 @@ while : ; do
     fi
     
     # 如果会话仍在运行
-    if [ $cloudflared_exit -ne 0 ]; then
-        echo >&2 "cloudflared 异常退出 (code $cloudflared_exit)，4秒后重启..."
+    if [ $ngrok_exit -ne 0 ]; then
+        echo >&2 "cloudflared 异常退出 (code $ngrok_exit)，4秒后重启..."
         sleep 4
     else
         echo "cloudflared 以状态0退出，4秒后重启..."
