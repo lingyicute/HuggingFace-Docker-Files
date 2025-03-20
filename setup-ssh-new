@@ -77,12 +77,10 @@ sshd_pid=$!
 echo '准备会话...'
 (tmux new-session -d -s lyi-hf-ssh)
 
-systemctl start cockpit.socket
-
 while : ; do
     start_ngrok
     
-    # 等待cloudflared进程退出
+    # 等待ngrok进程退出
     wait $ngrok_pid
     ngrok_exit=$?
     
@@ -95,10 +93,10 @@ while : ; do
     
     # 如果会话仍在运行
     if [ $ngrok_exit -ne 0 ]; then
-        echo >&2 "cloudflared 异常退出 (code $ngrok_exit)，4秒后重启..."
+        echo >&2 "ngrok 异常退出 (code $ngrok_exit)，4秒后重启..."
         sleep 4
     else
-        echo "cloudflared 以状态0退出，4秒后重启..."
+        echo "ngrok 以状态0退出，4秒后重启..."
         sleep 4
     fi
 done
